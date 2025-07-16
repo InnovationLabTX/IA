@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Physics 25-26 Implementation Progress Tracker</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .tabs {
+            background: white;
+            border-bottom: 2px solid #f0f0f0;
+            padding: 0 40px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .tab {
+            padding: 15px 25px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #666;
+            border-radius: 10px 10px 0 0;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tab:hover {
+            background: #f8f9ff;
+            color: #4facfe;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .content {
+            padding: 40px;
+            min-height: 600px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Progress by Campus Styles */
+        .overview-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border: 1px solid #e0e0e0;
+        }
+
+        .card h3 {
+            font-size: 1.3rem;
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .teacher-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .teacher-slot {
+            text-align: center;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .teacher-1 { background: #e3f2fd; color: #1976d2; }
+        .teacher-2 { background: #e8f5e8; color: #388e3c; }
+        .teacher-3 { background: #f3e5f5; color: #7b1fa2; }
+
+        .district-section {
+            background: white;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border: 1px solid #e0e0e0;
+            overflow: hidden;
+        }
+
+        .district-header {
+            padding: 20px;
+            background: linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+        }
+
+        .district-header:hover {
+            background: linear-gradient(135deg, #e8f2ff 0%, #d0e8ff 100%);
+        }
+
+        .district-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .district-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .campus-count {
+            background: #4facfe;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .chevron {
+            transition: transform 0.3s ease;
+            color: #666;
+        }
+
+        .chevron.expanded {
+            transform: rotate(90deg);
+        }
+
+        .campuses {
+            display: none;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .campuses.expanded {
+            display: block;
+        }
+
+        .campus-item {
+            padding: 20px;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.3s ease;
+        }
+
+        .campus-item:hover {
+            background: #f8f9ff;
+        }
+
+        .campus-item:last-child {
+            border-bottom: none;
+        }
+
+        .campus-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .progress-bar-container {
+            background: #f0f0f0;
+            border-radius: 10px;
+            height: 12px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        /* On-Level Physics Styles */
+        .directions-box {
+            background: linear-gradient(135deg, #00c851 0%, #4facfe 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .directions-box h3 {
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+        }
+
+        .directions-box p {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+
+        .curriculum-table {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border: 1px solid #e0e0e0;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1200px;
+        }
+
+        th {
+            background: linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%);
+            padding: 15px;
+            text-align: left;
+            font-weight: 700;
+            color: #333;
+            border-right: 1px solid #e0e0e0;
+        }
+
+        th.quarter-header {
+            text-align: center;
+            min-width: 200px;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            border-right: 1px solid #e0e0e0;
+            vertical-align: top;
+        }
+
+        tr:hover {
+            background: #f8f9ff;
+        }
+
+        .campus-cell {
+            font-weight: 600;
+            color: #333;
+            min-width: 200px;
+        }
+
+        .teacher-cell {
+            color: #666;
+            min-width: 100px;
+        }
+
+        .link-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            min-width: 150px;
+        }
+
+        .link-input:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .quarter-content {
+            min-width: 180px;
+        }
+
+        .unit-section {
+            margin-bottom: 15px;
+        }
+
+        .unit-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 8px;
+            padding: 5px;
+            background: #f0f8ff;
+            border-radius: 5px;
+        }
+
+        .weeks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+            gap: 5px;
+        }
+
+        .week-button {
+            padding: 8px 4px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: #f9f9f9;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .week-button:hover {
+            border-color: #4facfe;
+            background: #f0f8ff;
+        }
+
+        .week-button.completed {
+            background: #00c851;
+            color: white;
+            border-color: #00c851;
+        }
+
+        .week-button.completed:hover {
+            background: #00a847;
+        }
+
+        /* AP Physics Styles */
+        .coming-soon {
+            text-align: center;
+            padding: 80px 20px;
+            color: #666;
+        }
+
+        .coming-soon i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: #ddd;
+        }
+
+        .coming-soon h3 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+
+            .header {
+                padding: 25px 20px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .tabs {
+                padding: 0 20px;
+                flex-wrap: wrap;
+            }
+
+            .tab {
+                padding: 12px 18px;
+                font-size: 0.9rem;
+            }
+
+            .overview-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .teacher-grid {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .district-info {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .weeks-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .tab-content.active {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        /* Tooltip */
+        .week-button[title] {
+            position: relative;
+        }
+
+        .week-button[title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            z-index: 1000;
+            margin-bottom: 5px;
+            max-width: 300px;
+            white-space: normal;
+            word-wrap: break-word;
+        }
+
+        .week-button[title]:hover::before {
+            content: '';
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: #333;
+            margin-bottom: -5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1><i class="fas fa-atom"></i> Physics 25-26 Implementation Progress</h1>
+            <p>Comprehensive tracking system for Physics curriculum implementation across all campuses</p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('progress-campus')">
+                <i class="fas fa-chart-bar"></i> Progress by Campus
+            </button>
+            <button class="tab" onclick="showTab('on-level')">
+                <i class="fas fa-flask"></i> On-Level Physics
+            </button>
+            <button class="tab" onclick="showTab('ap-physics')">
+                <i class="fas fa-bolt"></i> AP Physics C
+            </button>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <!-- Progress by Campus Tab -->
+            <div id="progress-campus" class="tab-content active">
+                <div class="overview-cards">
+                    <div class="card">
+                        <h3><i class="fas fa-users"></i> On-Level Physics Teachers</h3>
+                        <div class="teacher-grid">
+                            <div class="teacher-slot teacher-1">Teacher 1</div>
+                            <div class="teacher-slot teacher-2">Teacher 2</div>
+                            <div class="teacher-slot teacher-3">Teacher 3</div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3><i class="fas fa-graduation-cap"></i> AP Physics C Teachers</h3>
+                        <div class="teacher-grid">
+                            <div class="teacher-slot teacher-1">Teacher 1</div>
+                            <div class="teacher-slot teacher-2">Teacher 2</div>
+                            <div class="teacher-slot teacher-3">Teacher 3</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="districts-container">
+                    <!-- Districts will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- On-Level Physics Tab -->
+            <div id="on-level" class="tab-content">
+                <div class="directions-box">
+                    <h3><i class="fas fa-info-circle"></i> Implementation Artifacts Guide</h3>
+                    <p><strong>Directions:</strong> Please share the link to your Implementation Artifacts with me at yusuf.dogan@harmonytx.org</p>
+                    <p>Your slides should have pictures/videos/screenshots/graded student work/etc. As well as past tense statements of what the students completed.</p>
+                </div>
+
+                <div class="curriculum-table">
+                    <div class="table-container">
+                        <table id="curriculum-table">
+                            <!-- Table will be populated by JavaScript -->
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AP Physics Tab -->
+            <div id="ap-physics" class="tab-content">
+                <div class="coming-soon">
+                    <i class="fas fa-tools"></i>
+                    <h3>AP Physics C - Mechanics</h3>
+                    <p>Advanced Placement Physics implementation tracking</p>
+                    <p style="margin-top: 20px; font-size: 0.9rem; color: #999;">
+                        This section will track AP Physics C-Mechanics curriculum implementation with similar structure to On-Level Physics
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data Structure
+        const districts = {
+            'Central Texas': ['Austin Excellence', 'Austin Endeavor', 'Austin Pflugerville'],
+            'Houston North': ['Houston Advancement', 'Houston Discovery', 'Houston Katy Middle High'],
+            'Houston SW': ['Katy Innovation', 'Beaumont Academy', 'Houston Ingenuity', 'Houston Science Academy', 'SugarLand Innovation'],
+            'North Texas': ['Carrollton Academy', 'Excellence Dallas', 'Euless Academy', 'Dallas Science Academy-High', 'Garland Innovation', 'Waco Innovation', 'Fort Worth Innovation', 'Dallas Innovation'],
+            'South Texas': ['Brownsville Innovation', 'Laredo Excellence', 'San Antonio Academy'],
+            'West Texas': ['El Paso School of Science', 'El Paso Innovation', 'El Paso Science']
+        };
+
+        const curriculum = {
+            'Quarter 1': {
+                'Kinematics 5 A-D': {
+                    'W1': 'Activity 0-Thickness of a book\nActivity 0 (Option B) Easy As Pie Lab',
+                    'W2': 'Activity 1A-Spaghetti Bridge Lab',
+                    'W3': 'Activity 1D-Constant Velocity Car\nActivity 1E-Acceleration Lab',
+                    'W4': 'Activity 2A-Picket Fence and Free Fall\nActivity 2A-(Option b) g Ball\nActivity 2B -Reaction Time',
+                    'W5': 'Activity 3A- Displacement Vector Lab\nActivity 3B- Vector Addition\nActivity 3D- Water Balloon Catapult'
+                },
+                'Dynamics 5 E-H': {
+                    'W6': 'Activity 4A - SOS Classroom activity\nActivity 4B - Newton\'s 2nd Law of Motion Lab\nActivity 4C - Weight vs Mass',
+                    'W7': 'Activity 4D - Free Body Diagrams\nActivity 4E - Newton\'s 3rd Law Activity\nActivity 5A. Friction Force',
+                    'W8': 'Activity 6A. Torque and Equilibrium\nActivity 6B. SOS Classroom Activity- Center of Mass Demonstrations'
+                }
+            },
+            'Quarter 2': {
+                'Work and Energy 7 A-C': {
+                    'W1': 'Activity 7A. Work on an Inclined Plane\nActivity 7 B. Conservation of Energy Experiment'
+                },
+                'Momentum 7 D-E': {
+                    'W2': 'Popper Dropper Option 1\nPopper Dropper Option 2',
+                    'W3': 'Activity 8A. Egg Throwing\nActivity 8B. Water Balloon Toss Game'
+                },
+                'Circular Motion 5 C&D': {
+                    'W4': 'Activity 8C. Conservation of Momentum-Pasco\nActivity 8C. Momentum PheT Lab',
+                    'W5': 'Activity 9A. Circular Motion in a Garden Hose\nActivity 9B. Penny on a Coat Hanger'
+                }
+            },
+            'Quarter 3': {
+                'Waves 8 A-G': {
+                    'W1': 'Activity 10A. Hooke\'s law without sensors',
+                    'W2': 'Activity 10A. Hooke\'s Law-PHET Spring Simulation',
+                    'W3': 'Activity 10B. Calculate the g of your classroom',
+                    'W4': 'Activity 11. Tuning Fork\nActivity 12A. How music is made?'
+                },
+                'Optics 8 A-G': {
+                    'W5': 'Activity 12D. Resonance with Sound Waves\nActivity 12E. Sound Pipe',
+                    'W6': 'Activity 13A. Calculate the Speed of Light\nActivity 13B. UV Beads',
+                    'W7': 'Activity 14A. Reflection Lab\nActivity 14B. Mini Camera'
+                }
+            },
+            'Quarter 4': {
+                'Electrostatics 6 A-C': {
+                    'W1': 'Activity 14C. Refraction Lab\nActivity 14D. Disappearing Colors',
+                    'W2': 'Activity 15A. Charges on a Conductor\nActivity 15B. John Travoltagr PhET'
+                },
+                'Circuits 6 D-E': {
+                    'W3': 'Activity 15E. DIY Electroscope\nActivity 15F. DIY Electroscope Demonstration',
+                    'W4': 'Activity 16A. Conductivity Experiment'
+                },
+                'Magnetism 6 A-C': {
+                    'W5': 'Activity 16C. Resistance on the pencil\nActivity 16E. Phet Circuit Lab',
+                    'W6': 'Activity 17A. DIY Compass',
+                    'W7': 'Activity 18A. DIY Electromagnet and Electric Motor\nActivity 18B - DIY Speaker'
+                }
+            }
+        };
+
+        // State management
+        let progressData = {};
+        let expandedDistricts = {};
+
+        // Tab switching
+        function showTab(tabId) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tab buttons
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabId).classList.add('active');
+            
+            // Add active class to clicked tab button
+            event.target.classList.add('active');
+        }
+
+        // Progress calculation
+        function calculateProgress(campus, teacher = null) {
+            let total = 0;
+            let completed = 0;
+            
+            Object.values(curriculum).forEach(quarter => {
+                Object.keys(quarter).forEach(unit => {
+                    Object.keys(quarter[unit]).forEach(week => {
+                        if (teacher) {
+                            total++;
+                            const key = `${campus}-${teacher}-${quarter}-${unit}-${week}`;
+                            if (progressData[key]) completed++;
+                        } else {
+                            // For campus-wide progress, check all 3 teachers
+                            for (let t = 1; t <= 3; t++) {
+                                total++;
+                                const key = `${campus}-Teacher ${t}-${quarter}-${unit}-${week}`;
+                                if (progressData[key]) completed++;
+                            }
+                        }
+                    });
+                });
+            });
+            
+            return { 
+                completed, 
+                total, 
+                percentage: total > 0 ? Math.round((completed / total) * 100) : 0 
+            };
+        }
+
+        // Toggle district expansion
+        function toggleDistrict(district) {
+            expandedDistricts[district] = !expandedDistricts[district];
+            renderDistricts();
+        }
+
+        // Toggle week completion
+        function toggleWeek(campus, teacher, quarter, unit, week) {
+            const key = `${campus}-${teacher}-${quarter}-${unit}-${week}`;
+            progressData[key] = !progressData[key];
+            
+            // Update the button appearance
+            const button = document.querySelector(`[data-key="${key}"]`);
+            if (button) {
+                button.classList.toggle('completed', progressData[key]);
+            }
+            
+            // Update progress displays
+            renderDistricts();
+        }
+
+        // Render districts section
+        function renderDistricts() {
+            const container = document.getElementById('districts-container');
+            container.innerHTML = '';
+
+            Object.keys(districts).forEach(district => {
+                const isExpanded = expandedDistricts[district];
+                
+                const districtDiv = document.createElement('div');
+                districtDiv.className = 'district-section';
+                
+                districtDiv.innerHTML = `
+                    <div class="district-header" onclick="toggleDistrict('${district}')">
+                        <div class="district-info">
+                            <i class="fas fa-chevron-right chevron ${isExpanded ? 'expanded' : ''}"></i>
+                            <span class="district-name">${district}</span>
+                            <span class="campus-count">${districts[district].length} campuses</span>
+                        </div>
+                    </div>
+                    <div class="campuses ${isExpanded ? 'expanded' : ''}">
+                        ${districts[district].map(campus => {
+                            const progress = calculateProgress(campus);
+                            return `
+                                <div class="campus-item">
+                                    <div class="campus-name">${campus}</div>
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar" style="width: ${progress.percentage}%"></div>
+                                    </div>
+                                    <div class="progress-text">
+                                        ${progress.completed}/${progress.total} activities completed (${progress.percentage}%)
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+                
+                container.appendChild(districtDiv);
+            });
+        }
+
+        // Render curriculum table
+        function renderCurriculumTable() {
+            const table = document.getElementById('curriculum-table');
+            
+            // Create header
+            const headerRow = document.createElement('tr');
+            headerRow.innerHTML = `
+                <th>Campus</th>
+                <th>Teacher</th>
+                <th>Link</th>
+                ${Object.keys(curriculum).map(quarter => 
+                    `<th class="quarter-header">${quarter}</th>`
+                ).join('')}
+            `;
+            
+            const thead = document.createElement('thead');
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+            
+            // Create body
+            const tbody = document.createElement('tbody');
+            
+            Object.values(districts).flat().forEach(campus => {
+                [1, 2, 3].forEach(teacherNum => {
+                    const row = document.createElement('tr');
+                    
+                    row.innerHTML = `
+                        <td class="campus-cell">${campus}</td>
+                        <td class="teacher-cell">Teacher ${teacherNum}</td>
+                        <td>
+                            <input type="url" class="link-input" placeholder="Implementation artifact link">
+                        </td>
+                        ${Object.entries(curriculum).map(([quarter, units]) => `
+                            <td class="quarter-content">
+                                ${Object.entries(units).map(([unit, weeks]) => `
+                                    <div class="unit-section">
+                                        <div class="unit-title">${unit}</div>
+                                        <div class="weeks-grid">
+                                            ${Object.entries(weeks).map(([week, activity]) => {
+                                                const key = `${campus}-Teacher ${teacherNum}-${quarter}-${unit}-${week}`;
+                                                const isCompleted = progressData[key] || false;
+                                                return `
+                                                    <button 
+                                                        class="week-button ${isCompleted ? 'completed' : ''}"
+                                                        data-key="${key}"
+                                                        title="${activity}"
+                                                        onclick="toggleWeek('${campus}', 'Teacher ${teacherNum}', '${quarter}', '${unit}', '${week}')"
+                                                    >
+                                                        ${week}
+                                                    </button>
+                                                `;
+                                            }).join('')}
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </td>
+                        `).join('')}
+                    `;
+                    
+                    tbody.appendChild(row);
+                });
+            });
+            
+            table.appendChild(tbody);
+        }
+
+        // Initialize the application
+        function init() {
+            renderDistricts();
+            renderCurriculumTable();
+        }
+
+        // Start the application when page loads
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
